@@ -8,6 +8,18 @@
 Запуск тестов
 `python3 httptest.py`
 
+Результат функционального тестирования:
+![func](./img/testsuccess.png)
+
+Нагрузочное тестирование в сравнении с nginx:
+
+#### Nginx
+![nginx1](./img/nginx1.png)
+![nginx2](./img/nginx2.png)
+
+#### Python
+![python1](./img/python1.png)
+![python2](./img/python2.png)
 
 Web server test suite
 =====================
