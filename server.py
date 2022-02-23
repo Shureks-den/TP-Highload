@@ -1,4 +1,5 @@
 from datetime import datetime
+from urllib.parse import unquote
 import mimetypes
 import threading
 import os
@@ -69,17 +70,23 @@ class HTTPWebServer():
                 return
             if request._path.find('/../') != -1:
                 self.response(conn, HTTPResponse(
-                    405, 'Method Not Allowed', self._badReqHeaders))
+                    403, 'Forbidden', self._badReqHeaders))
                 return
+            indexFile = False
+            unquotedPath = unquote(request._path)
             if request._path[-1] == '/' and request._path.find('.') == -1:
-                filePath = self._dir + request._path + 'index.html'
+                filePath = self._dir + unquotedPath + 'index.html'
+                indexFile = True
             else:
-                filePath = self._dir + request._path
+                filePath = self._dir + unquotedPath
             try:
                 print(filePath)
                 file = open(filePath, 'rb')
             except:
-                resp = HTTPResponse(404, 'Not Found', headers=self._badReqHeaders)
+                if indexFile:
+                    resp = HTTPResponse(403, 'Forbidden', headers=self._badReqHeaders)
+                else:
+                    resp = HTTPResponse(404, 'Not Found', headers=self._badReqHeaders)
                 self.response(conn, resp)
                 return
 
