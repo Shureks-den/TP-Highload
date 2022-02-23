@@ -7,12 +7,6 @@ import socket
 import signal
 from httpHelper import HTTPRequest, HTTPResponse
 
-
-DEFAULT_THREADS = 256
-DEFAULT_ROOT_DIR = '/var/www/html'
-HOST = '0.0.0.0'
-PORT = 80
-
 class HTTPWebServer():
         def __init__(self, host, port, threads, dir):
             print('start')
@@ -23,6 +17,8 @@ class HTTPWebServer():
             self._dir = dir
             self._cpuPool = []
             self._requestQueue = queue.SimpleQueue()
+            self._badReqHeaders = [('Server', 'Highload-python'),
+                    ('Date', datetime.now()), ('Connection', 'close')]
             print('done')
 
         def listenAndServe(self):
@@ -60,8 +56,9 @@ class HTTPWebServer():
 
         def fileLookUp(self, conn, filePath):
             type, _ = mimetypes.guess_type(filePath, strict=True)
+            print(type)
             headers = [('Content-Type', type), ('Content-Length', os.path.getsize(filePath)),
-                ('Server', 'Highload-python'), ('Date', datetime.now()), ('Connection', 'keep-alive')]
+                ('Server', 'Highload-python'), ('Date', datetime.now()), ('Connection', 'close')]
             res = HTTPResponse(200, 'OK', headers)
             self.response(conn, res)
 
@@ -71,23 +68,22 @@ class HTTPWebServer():
                 self.response(conn, request) # отправляем ошибкой, если произошла ошибка парсинга
                 return
             if request._path.find('/../') != -1:
-                self.response(HTTPResponse(
-                    405, 'Method Not Allowed'), [('Content-length', 0)])
+                self.response(conn, HTTPResponse(
+                    405, 'Method Not Allowed', self._badReqHeaders))
                 return
     
             indexFile = False
             if request._path[-1] == '/':
                 filePath = self._dir + request._path + 'index.html'
+                print(filePath)
                 indexFile = True
             try:
-                file = open(filePath, 'r')
+                file = open(filePath, 'rb')
             except:
-                headers = [('Content-Length', 0), ('Server', 'Highload-python'),
-                    ('Date', datetime.now()), ('Connection', 'close')]
                 if indexFile:
-                    resp = HTTPResponse(403, 'Forbidden', headers=headers)
+                    resp = HTTPResponse(403, 'Forbidden', headers=self._badReqHeaders)
                 else:
-                    resp = HTTPResponse(404, 'Not Found', headers=headers)
+                    resp = HTTPResponse(404, 'Not Found', headers=self._badReqHeaders)
                 self.response(conn, resp)
                 return
 
@@ -113,11 +109,14 @@ class HTTPWebServer():
 
         def parseRequest(self, conn):
             rawFile = conn.makefile('r')
-            method, path, ver = rawFile.readline().split()
+            info = rawFile.readline().split()
+            if len(info) != 3:
+                return HTTPResponse(400, 'Bad request', self._badReqHeaders)
+            method, path, ver = info
             if method != 'GET' and method != 'HEAD':
-                return HTTPResponse(405, 'Method Not Allowed', [('Content-length', 0)])
+                return HTTPResponse(405, 'Method Not Allowed', self._badReqHeaders)
             if ver != 'HTTP/1.1' and ver != 'HTTP/1.0':
-                return HTTPResponse(505, 'HTTP Version Not Supported', [('Content-length', 0)])
+                return HTTPResponse(505, 'HTTP Version Not Supported', self._badReqHeaders)
             headers = {}
             while True:
                 line = rawFile.readline()
@@ -133,25 +132,3 @@ class HTTPWebServer():
                 rawFile.close()
                 return HTTPRequest(method, path, ver, headers, None)
         
-
-
-def parseConf():
-    threads = DEFAULT_THREADS
-    root = DEFAULT_ROOT_DIR
-    try:
-        f = open('./httpd.conf', 'r')
-        # f = open('/etc/httpd.conf', 'r')
-        parsedFile = f.read().split('\n')
-        for text in parsedFile:
-            if text.find('thread_limit') > -1:
-                threads = int(text.split(' ')[1])
-            if text.find('document_root') > -1:
-                root = text.split(' ')[1]
-    finally:
-        f.close()
-        return threads, root
-
-if __name__ == '__main__':
-    numThreads, rootFolder = parseConf()
-    server = HTTPWebServer(HOST, PORT, numThreads, rootFolder)
-    server.listenAndServe()
