@@ -57,7 +57,6 @@ class HTTPWebServer():
 
         def fileLookUp(self, conn, filePath):
             type, _ = mimetypes.guess_type(filePath, strict=True)
-            print(type)
             headers = [('Content-Type', type), ('Content-Length', os.path.getsize(filePath)),
                 ('Server', 'Highload-python'), ('Date', datetime.now()), ('Connection', 'close')]
             res = HTTPResponse(200, 'OK', headers)
@@ -79,8 +78,8 @@ class HTTPWebServer():
                 indexFile = True
             else:
                 filePath = self._dir + unquotedPath
+
             try:
-                print(filePath)
                 file = open(filePath, 'rb')
             except:
                 if indexFile:
