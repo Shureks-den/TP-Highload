@@ -9,6 +9,7 @@ def parseConf():
     threads = DEFAULT_THREADS
     root = DEFAULT_ROOT_DIR
     try:
+        # f = open('./httpd.conf', 'r')
         f = open('/etc/httpd.conf', 'r')
         parsedFile = f.read().split('\n')
         for text in parsedFile:
