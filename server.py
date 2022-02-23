@@ -71,19 +71,15 @@ class HTTPWebServer():
                 self.response(conn, HTTPResponse(
                     405, 'Method Not Allowed', self._badReqHeaders))
                 return
-    
-            indexFile = False
-            if request._path[-1] == '/':
+            if request._path[-1] == '/' and request._path.find('.') == -1:
                 filePath = self._dir + request._path + 'index.html'
-                print(filePath)
-                indexFile = True
+            else:
+                filePath = self._dir + request._path
             try:
+                print(filePath)
                 file = open(filePath, 'rb')
             except:
-                if indexFile:
-                    resp = HTTPResponse(403, 'Forbidden', headers=self._badReqHeaders)
-                else:
-                    resp = HTTPResponse(404, 'Not Found', headers=self._badReqHeaders)
+                resp = HTTPResponse(404, 'Not Found', headers=self._badReqHeaders)
                 self.response(conn, resp)
                 return
 
