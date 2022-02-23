@@ -1,5 +1,14 @@
 # TP-Highload
 
+### Запуск контейнера и тестов ###
+Запуск докер-контейнера
+`docker build . -t highload`
+`docker run -p 80:80 -t highload`
+
+Запуск тестов
+`python3 httptest.py`
+
+
 Web server test suite
 =====================
 
