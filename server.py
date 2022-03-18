@@ -31,16 +31,20 @@ class HTTPWebServer():
                 for _ in range(self._cpuNum):
                     pid = os.fork()
                     if pid == 0:
-                        return
+                        continue
                     for _ in range(self._threads):
                         t = threading.Thread(target = self.threadWork, daemon=True)
                         t.start()
                     self._cpuPool.append(pid)
-                    print(pid)
-                print('ready to serve')
+                    print(pid) 
+                    while True:
+                        conn, _ = sock.accept()
+                        self._requestQueue.put(conn)
+                                
                 while True:
-                    conn, _ = sock.accept()
-                    self._requestQueue.put(conn)
+                    1
+
+
             except KeyboardInterrupt:
                 sock.close()
                 for pid in self._cpuPool:
@@ -91,7 +95,10 @@ class HTTPWebServer():
 
             self.fileLookUp(conn, filePath)
             if request._method == 'GET':
-                conn.sendfile(file)
+                try:
+                    conn.sendfile(file)
+                except BrokenPipeError:
+                    conn.sendfile(file)
             file.close()     
 
 

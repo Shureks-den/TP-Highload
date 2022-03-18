@@ -3,7 +3,7 @@ from server import HTTPWebServer
 HOST = '0.0.0.0'
 PORT = 80
 DEFAULT_THREADS = 256
-DEFAULT_ROOT_DIR = '/var/www/html'
+DEFAULT_ROOT_DIR = '/home/zennoma/TP-Highload/tests'
 
 def parseConf():
     threads = DEFAULT_THREADS
